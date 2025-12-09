@@ -1,21 +1,18 @@
-; Programa: Converte decimal para binário (32 bits)
-; Estrutura baseada no exemplo de ordenação fornecido
-; Lógica: Loop de 31 até 0, shift right e AND com 1.
-
+;guarda os numeros nas variaveis
+;dq eh define quadword (64bytes)
 segment .data
-a: dq 0              ; Variável para guardar o numero digitado (n)
-cnt: dq 31           ; Contador do loop (começa em 31 igual no C)
-temp: dq 0           ; Variável auxiliar para calculos
-fmt_in: dq "%lld", 0 ; Ler numero (long long int)
-msg_input: dq "Fala tu, manda um numero decimal ai: ", 0
-msg_res: dq "O binario desse numero eh: ", 0
-str_0: dq "0", 0     ; String para imprimir 0
-str_1: dq "1", 0     ; String para imprimir 1
-newline: dq 10, 0    ; Pular linha (\n)
+a:      dq 0    
+cnt:    dq 31
+temp:   dq 0
 
-segment .bss
-; O codigo original tinha arrays aqui, deixei vazio ou voce pode tirar
-; pois nao precisamos de vetor pra essa logica especifica, mas mantive a section.
+
+;define strings de C, db eh define byte
+fmt_in:     db "%lld", 0
+msg_input:  db "Fala tu, manda um numero decimal ai: ", 0
+msg_res:    db "O binario desse numero eh: ", 0
+str_0:      db "0", 0
+str_1:      db "1", 0
+newline:    db 10, 0
 
 segment .text
 global main
@@ -23,70 +20,65 @@ extern printf
 extern scanf
 
 main:
-    push RBP
+    push rbp
+    mov rbp, rsp
 
-    ; --- Parte 1: Printf "Fala tu..." ---
-    mov RAX, 0
-    mov RDI, msg_input
+    ;output para pedir numero
+    mov rax, 0
+    mov rdi, msg_input
     call printf
 
-    ; --- Parte 2: Scanf (Ler o numero 'n') ---
-    mov RAX, 0
-    mov RDI, fmt_in
-    mov RSI, a      ; Salva o input na variavel 'a' (que seria o 'n' do C)
+    ;input do numero
+    mov rax, 0
+    mov rdi, fmt_in
+    mov rsi, a
     call scanf
 
-    ; --- Parte 3: Printf "O binario eh..." ---
-    mov RAX, 0
-    mov RDI, msg_res
+    ;printa o binario
+    mov rax, 0
+    mov rdi, msg_res
     call printf
 
-    ; Inicializa o loop. No C é: for (int i = 31; i >= 0; i--)
-    mov qword [cnt], 31 
+    ;passa indice para o loop
+    mov qword [cnt], 31
 
+;i--
 BIT_LOOP:
-    ; Verifica se o contador (i) é menor que 0. Se for, acabou.
+    ;verificao do loop, se i < 0 sai do loop
     cmp qword [cnt], 0
     jl END_LOOP
 
-    ; --- Logica do C: int k = n >> i; ---
-    mov RAX, [a]        ; Carrega 'n' em RAX
-    mov RCX, [cnt]      ; Carrega 'i' em RCX
+    ;carrega o numero decimal e contador 
+    mov rax, [a]
+    mov rcx, [cnt]
     
-    ; O shift right (>>) usa o registrador CL (parte baixa de RCX)
-    shr RAX, cl         ; RAX = RAX >> CL (n >> i)
-    
-    ; --- Logica do C: if (k & 1) ---
-    and RAX, 1          ; Faz o AND bit a bit com 1
-    cmp RAX, 1          ; Compara se o resultado é 1
-    je PRINT_1          ; Se for igual, pula pro print 1
-    
-    ; Se não pulou, é zero:
+    shr rax, cl
+    and rax, 1
+    cmp rax, 1
+    je PRINT_1
     jmp PRINT_0
 
 PRINT_1:
-    mov RAX, 0
-    mov RDI, str_1
+    mov rax, 0
+    mov rdi, str_1
     call printf
-    jmp LOOP_DEC        ; Pula pro final do loop pra decrementar
+    jmp LOOP_DEC
 
 PRINT_0:
-    mov RAX, 0
-    mov RDI, str_0
+    mov rax, 0
+    mov rdi, str_0
     call printf
-    jmp LOOP_DEC        ; Pula pro final do loop pra decrementar
+    jmp LOOP_DEC
 
 LOOP_DEC:
-    ; --- Logica do C: i-- ---
-    dec qword [cnt]     ; Decrementa o contador na memória
-    jmp BIT_LOOP        ; Volta pro inicio do loop
+    dec qword [cnt]
+    jmp BIT_LOOP
 
 END_LOOP:
-    ; --- Printf final ("\n") ---
-    mov RAX, 0
-    mov RDI, newline
+    mov rax, 0
+    mov rdi, newline
     call printf
 
-    mov RAX, 0
-    pop RBP
+    mov rsp, rbp
+    pop rbp
     ret
